@@ -50,8 +50,8 @@
 #define LED_HB    9
 #define LED_ERR   8
 #define LED_PMODE 7
-#define CLOCKOUT 6
-#define SELECTOR 5
+#define CLOCKOUT 5
+#define SELECTOR 6
 #define PROG_FLICKER true
 
 #define HWVER 2
