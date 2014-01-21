@@ -402,9 +402,7 @@ void setup() {
         readBootloader ();
       }
     readProgram ();
-    while(1) {
-      delay(1000);
-    }
+    software_Reset();
   } else {
     Serial.begin(19200);
     pinMode(LED_PMODE, OUTPUT);
@@ -466,6 +464,11 @@ void loop(void) {
   heartbeat();
   if (Serial.available()) {
     avrisp();
+  }
+  if (digitalRead(SELECTOR) == LOW) {
+    //Selector button pushed, do reset so can initialize in
+    //Atmel Chip Detector mode
+    software_Reset();
   }
 }
 
@@ -891,5 +894,7 @@ int avrisp() {
   }
 }
 
-
+void software_Reset() { // Restarts program from beginning but does not reset the peripherals and registers
+  asm volatile ("  jmp 0");  
+}  
 
