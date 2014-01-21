@@ -375,34 +375,7 @@ void setup() {
   pinMode(SELECTOR, INPUT_PULLUP);
   if (digitalRead(SELECTOR) == LOW) {
     //Input activated to enable Atmel chip Detector
-    Serial.begin (57600);
-    while (!Serial) ;  // for Leonardo, Micro etc.
-    Serial.println ();
-    Serial.println ("Atmega chip detector.");
- 
-    digitalWrite(SS, HIGH);  // ensure SS stays high for now
-    SPI.begin ();
-  
-    // slow down SPI for benefit of slower processors like the Attiny
-    SPI.setClockDivider(SPI_CLOCK_DIV64);
-
-    pinMode (CLOCKOUT, OUTPUT);
-  
-    // set up Timer 1
-    TCCR1A = _BV (COM1A0);  // toggle OC1A on Compare Match
-    TCCR1B = _BV(WGM12) | _BV(CS10);   // CTC, no prescaling
-    OCR1A =  0;       // output every cycle
-  
-    startProgramming ();
-    getSignature ();
-    getFuseBytes ();
-  
-    if (foundSig != -1)
-      {
-        readBootloader ();
-      }
-    readProgram ();
-    software_Reset();
+    detectBoard();
   } else {
     Serial.begin(19200);
     pinMode(LED_PMODE, OUTPUT);
@@ -898,3 +871,34 @@ void software_Reset() { // Restarts program from beginning but does not reset th
   asm volatile ("  jmp 0");  
 }  
 
+void detectBoard() {
+    Serial.begin (57600);
+    while (!Serial) ;  // for Leonardo, Micro etc.
+    Serial.println ();
+    Serial.println ("Atmega chip detector.");
+ 
+    digitalWrite(SS, HIGH);  // ensure SS stays high for now
+    SPI.begin ();
+  
+    // slow down SPI for benefit of slower processors like the Attiny
+    SPI.setClockDivider(SPI_CLOCK_DIV64);
+
+    pinMode (CLOCKOUT, OUTPUT);
+  
+    // set up Timer 1
+    TCCR1A = _BV (COM1A0);  // toggle OC1A on Compare Match
+    TCCR1B = _BV(WGM12) | _BV(CS10);   // CTC, no prescaling
+    OCR1A =  0;       // output every cycle
+  
+    startProgramming ();
+    getSignature ();
+    getFuseBytes ();
+  
+    if (foundSig != -1)
+      {
+        readBootloader ();
+      }
+    readProgram ();
+    digitalWrite(SS, HIGH); //Disables reset line to secondary processor...
+    software_Reset();
+}
