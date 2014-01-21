@@ -860,7 +860,7 @@ void software_Reset() { // Restarts program from beginning but does not reset th
 }  
 
 void detectBoard() {
-    Serial.begin (57600);
+    Serial.begin (115000);
     while (!Serial) ;  // for Leonardo, Micro etc.
     Serial.println ();
     Serial.println ("Atmega chip detector.");
@@ -888,5 +888,6 @@ void detectBoard() {
       }
     readProgram ();
     digitalWrite(SS, HIGH); //Disables reset line to secondary processor...
+    SPI.end();
     software_Reset();
 }
