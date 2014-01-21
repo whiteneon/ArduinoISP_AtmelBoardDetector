@@ -17,31 +17,6 @@
 // 8: Error       - Lights up if something goes wrong (use red if that makes sense)
 // 7: Programming - In communication with the slave
 //
-// 23 July 2011 Randall Bohn
-// -Address Arduino issue 509 :: Portability of ArduinoISP
-// http://code.google.com/p/arduino/issues/detail?id=509
-//
-// October 2010 by Randall Bohn
-// - Write to EEPROM > 256 bytes
-// - Better use of LEDs:
-// -- Flash LED_PMODE on each flash commit
-// -- Flash LED_PMODE while writing EEPROM (both give visual feedback of writing progress)
-// - Light LED_ERR whenever we hit a STK_NOSYNC. Turn it off when back in sync.
-// - Use pins_arduino.h (should also work on Arduino Mega)
-//
-// October 2009 by David A. Mellis
-// - Added support for the read signature command
-// 
-// February 2009 by Randall Bohn
-// - Added support for writing to EEPROM (what took so long?)
-// Windows users should consider WinAVR's avrdude instead of the
-// avrdude included with Arduino software.
-//
-// January 2008 by Randall Bohn
-// - Thanks to Amplificar for helping me with the STK500 protocol
-// - The AVRISP/STK500 (mk I) protocol is used in the arduino bootloader
-// - The SPI functions herein were developed for the AVR910_ARD programmer 
-// - More information at http://code.google.com/p/mega-isp
 
 #include <SPI.h> //New Program Data
 #include "pins_arduino.h"
@@ -161,7 +136,7 @@ const signatureType signatures [] =
 // if signature found in above table, this is its index
 int foundSig = -1;
 byte lastAddressMSB = 0;
-
+word programLengthToRead = 0; //word == unsigned int
 // execute one programming instruction ... b1 is command, b2, b3, b4 are arguments
 //  processor may return a result on the 4th transfer, this is returned.
 byte program (const byte b1, const byte b2 = 0, const byte b3 = 0, const byte b4 = 0)
@@ -277,9 +252,17 @@ void readBootloader ()
 void readProgram ()
   {
   unsigned long addr = 0;
-  unsigned int  len = 256;
+  unsigned int  len = 0;
   Serial.println ();
-  Serial.println ("First 256 bytes of program memory:");
+  if (digitalRead(SELECTOR) == LOW) {
+    len = programLengthToRead;
+    Serial.print("Printing flash memory ");
+    Serial.print(len);
+    Serial.println("KB");    
+  } else {
+    Serial.println ("First 256 bytes of program memory:");
+    len = 256;
+  }
   Serial.println ();
  
   for (int i = 0; i < len; i++)
@@ -346,6 +329,7 @@ void getSignature ()
       Serial.println (signatures [j].desc);
       Serial.print ("Flash memory size = ");
       Serial.println (signatures [j].flashSize, DEC);
+      programLengthToRead = signatures[j].flashSize;
       return;
       }
     }
@@ -386,7 +370,9 @@ void setup() {
     pulse(LED_HB, 2);
   }
 }
-
+///////////////////////////////
+//Begin ISP Functions
+///////////////////////////////
 int error=0;
 int pmode=0;
 // address for reading and writing, set by 'U' command
@@ -866,7 +852,9 @@ int avrisp() {
       Serial.print((char)STK_NOSYNC);
   }
 }
-
+/////////////////////////////////////
+//End ISP Functions
+/////////////////////////////////////
 void software_Reset() { // Restarts program from beginning but does not reset the peripherals and registers
   asm volatile ("  jmp 0");  
 }  
